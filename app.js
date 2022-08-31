@@ -1,26 +1,16 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const Anime = require('./models/anime');
-const mongoDB = require('./constants');
-console.log(mongoDB);
-const app  = express();
-mongoose.connect(mongoDB,{useNewUrlParser: true}).then(() => {
-app.listen(3000);
-console.log('connected to mongodb');   
-}).catch(error=>{
-    console.log(error);  
-    
-});
-app.get('/',(req,res)=>{
-    const anime = new Anime({
-        animeName: 'test',
-        animeType: 'type',
-        creationDate: '31/08/2022',
-        episodeDuration: 1,
-        episodesCount: 133,
-        image: 'image',
+import express from 'express';
+import mongoose from 'mongoose';
+import { mongoDB } from './constants.js';
+import animeRoutes from './routes/anime.js';
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.use(express.json({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/anime', animeRoutes);
+mongoose.connect(mongoDB, { useNewUrlParser: true }).then(() => {
+    app.listen(PORT);
+    console.log('connected to mongodb');
+}).catch(error => {
+    console.log(error);
 
-
-    });
-    anime.save().then(result=> res.send(result));
 });

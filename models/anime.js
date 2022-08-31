@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+
 const schema = mongoose.Schema;
 
 const animeSchema = new schema({
@@ -29,5 +30,5 @@ episodeDuration:{type:Number,},
 // crews:{},
 },{timestamps: true, collection: 'Anime',});
 
-const anime = mongoose.model('Anime',animeSchema);
-module.exports = anime;
+const Anime = mongoose.model('Anime',animeSchema);
+export default Anime;

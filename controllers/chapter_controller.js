@@ -8,7 +8,7 @@ export const getChapterList = async (req, res) => {
 
         res.status(200).json(chapter);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -17,7 +17,7 @@ export const getChapterById = async (req, res) => {
         const chapter = await Chapter.findById(req.params.id).populate('manga', 'mangaName image -_id');
         sendItemIfExist(chapter, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -41,7 +41,7 @@ export const deleteChapter = async (req, res) => {
         const chapter = await Chapter.findByIdAndDelete(req.params.id);
         res.status(200).json(chapter);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -55,7 +55,7 @@ export const editChapter = async (req, res) => {
 
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

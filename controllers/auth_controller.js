@@ -1,25 +1,22 @@
 
-import User from '../models/user.js';
 import jwt from 'jsonwebtoken';
+import User from '../models/user.js';
+import { destructPassword, sendItemIfExist } from '../utils/helpers.js';
 
-// GET ALL ACCOUNTS IF ADMIN REQUESTING
-export const getUserList = async (req, res) => {
+// GET ALL 
+export const getAllAccounts = async (req, res) => {
     try {
-        if (req.body.user.isAdmin) {
 
-            const user = await User.find();
+        const user = await User.find();
+        const newList = [];
+        user.forEach(nestedUser => {
 
-
-
-            res.status(200).json(user);
-        } else {
-
-            res.status(403).json({ message: 'You Are Not Authorized' });
-        }
-
+            newList.push(destructPassword(nestedUser));
+        });
+        res.status(200).json(newList);
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -35,21 +32,21 @@ export const login = async (req, res) => {
             if (originalUser.passwordHash === user.password) {
 
                 const accessToken = signJWT(originalUser);
-                const { password, __v, ...others } = originalUser._doc;
-                res.status(200).json({ ...others, accessToken: accessToken });
+                res.status(200).json({ ...destructPassword(originalUser), accessToken: accessToken });
             } else {
 
                 res.status(401).json({ message: 'wrong password' });
             }
         }
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
 
 //SIGN UP
 export const register = async (req, res) => {
+    req.body.isAdmin = false;
     const user = new User(req.body);
     user.passwordHash = user.password;
 
@@ -58,7 +55,8 @@ export const register = async (req, res) => {
         if (exist == null) {
 
             await user.save();
-            res.status(201).json(user);
+
+            res.status(201).json(destructPassword(user));
         } else {
             res.status(409).json({ message: 'Email is Already Exist' });
         }
@@ -70,53 +68,45 @@ export const register = async (req, res) => {
 
 
 
-export const deleteUser = async (req, res) => {
+//DELETE 
+export const deleteAccount = async (req, res) => {
     try {
-        const user = await User.find(req.params.userName);
-        res.status(200).json(user);
-    } catch (error) {
-        res.status(404).json({ message: error.message });
+        const user = await User.findByIdAndDelete(req.params.id);
+        sendItemIfExist(user, res, destructPassword(user));
 
+
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
+
 }
 
-export const editUser = async (req, res) => {
+// EDIT
+export const editAccount = async (req, res) => {
     try {
-        await verityJWT(req, res, async (req, res) => {
-            await User.findByIdAndUpdate(req.params.id, req.body);
-            const user = await User.findById(req.params.id);
-            res.status(200).json(user);
-        });
+        if (!req.params.isAdmin) {
+            req.body.isAdmin = false;
+        }
+        let user;
+        user = new User(req.body)
+        if (user.password) {
+
+            user.passwordHash = user.password;
+        }
+        const { _id, ...others } = user._doc;
+        user =
+            await User.findByIdAndUpdate(req.params.id, others, {
+                new: true
+            });
+        sendItemIfExist(user, res, destructPassword(user));
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
 
 function signJWT(user) {
     return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.jwt_sec, { expiresIn: '15d' });
-}
-
-export const verityJWT = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    try {
-        if (authHeader) {
-            const accessToken = authHeader.split(' ')[1];
-            jwt.verify(accessToken, process.env.jwt_sec, (err, user) => {
-                if (err) {
-                    res.status(404).json({ message: err });
-
-                } else {
-                    req.body.user = user;
-                    next();
-
-                }
-            });
-        } else {
-            res.status(404).json({ message: 'Missing Authorization' });
-        }
-    } catch (error) {
-        res.status(404).json({ message: error });
-    }
 }

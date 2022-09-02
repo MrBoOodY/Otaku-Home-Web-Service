@@ -8,7 +8,7 @@ export const getCategoryList = async (req, res) => {
 
         res.status(200).json(category);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -17,7 +17,7 @@ export const getCategoryById = async (req, res) => {
         const category = await Category.findById(req.params.id);
         sendItemIfExist(category, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -41,21 +41,23 @@ export const deleteCategory = async (req, res) => {
         const category = await Category.findByIdAndDelete(req.params.id);
         res.status(200).json(category);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
 
 export const editCategory = async (req, res) => {
     try {
-        const category = await Category.findByIdAndUpdate(req.params.id, req.body);
+        const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+            new: true
+        });
         sendItemIfExist(category, res, async () => {
             return await Category.findById(req.params.id);
 
         });
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

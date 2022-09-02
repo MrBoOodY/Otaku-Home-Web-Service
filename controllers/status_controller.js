@@ -9,7 +9,7 @@ export const getStatusList = async (req, res) => {
 
         res.status(200).json(status);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -18,7 +18,7 @@ export const getStatusById = async (req, res) => {
         const status = await Status.findById(req.params.id);
         sendItemIfExist(status, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -44,7 +44,7 @@ export const deleteStatus = async (req, res) => {
         res.status(200).json(status);
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -56,7 +56,7 @@ export const editStatus = async (req, res) => {
             return await Status.findById(req.params.id);
         });
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

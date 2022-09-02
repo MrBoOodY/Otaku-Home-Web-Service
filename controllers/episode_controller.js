@@ -16,7 +16,7 @@ export const getEpisodeList = async (req, res) => {
         });
         res.status(200).json(episode);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -34,7 +34,7 @@ export const getEpisodeById = async (req, res) => {
         });
         sendItemIfExist(episode, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -80,7 +80,7 @@ export const deleteEpisode = async (req, res) => {
         });
         res.status(200).json(episode);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -102,7 +102,7 @@ export const editEpisode = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

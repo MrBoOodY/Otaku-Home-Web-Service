@@ -8,7 +8,7 @@ export const getCrewList = async (req, res) => {
 
         res.status(200).json(crew);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -17,7 +17,7 @@ export const getCrewById = async (req, res) => {
         const crew = await Crew.findById(req.params.id);
         sendItemIfExist(crew, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -41,7 +41,7 @@ export const deleteCrew = async (req, res) => {
         const crew = await Crew.findByIdAndDelete(req.params.id);
         res.status(200).json(crew);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -54,7 +54,7 @@ export const editCrew = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

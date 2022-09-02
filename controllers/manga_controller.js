@@ -8,7 +8,7 @@ export const getMangaList = async (req, res) => {
 
         res.status(200).json(manga);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -17,7 +17,7 @@ export const getMangaById = async (req, res) => {
         const manga = await Manga.findById(req.params.id).populate('categories', 'ar en -_id').populate('mangaStatus', 'ar en -_id');
         sendItemIfExist(manga, res);
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -44,7 +44,7 @@ export const deleteManga = async (req, res) => {
         res.status(200).json(manga);
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }
@@ -57,7 +57,7 @@ export const editManga = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        res.status(500).json({ message: error.message });
 
     }
 }

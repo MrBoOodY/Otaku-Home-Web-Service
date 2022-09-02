@@ -1,34 +1,70 @@
 import mongoose from 'mongoose';
 
-const schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-const animeSchema = new schema({
-  
-animeName:{type:String,
-},
-creationDate:{type:String,
-},
-image:{type:String,
-},
-studio:{type:String,
-},
-animeType:{type:String,
-},
-tutorial:{type:String,
-}, 
-rates:{type:Number,},
-// categories:{},
-popular:{type:Boolean,},
-tierAge:{type:Number,},
-episodesCount:{type:Number,},
-episodeDuration:{type:Number,},
-// animeState:{},
-// animeStory:{},
-// animeSeason:{},
-// animeSource:{},
-// releaseDay:{},
-// crews:{},
-},{timestamps: true, collection: 'Anime',});
+const animeSchema = new Schema({
 
-const Anime = mongoose.model('Anime',animeSchema);
+    animeName: {
+        type: String, unique: true
+    },
+    creationDate: {
+        type: String,
+    },
+    image: {
+        type: String,
+    },
+    studio: {
+        type: String,
+    },
+    animeType: {
+        type: String,
+    },
+    tutorial: {
+        type: String,
+    },
+    rates: { type: Number, },
+
+    categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
+    popular: { type: Boolean, required: true, },
+    tierAge: { type: Number, },
+    episodesCount: { type: Number, },
+    episodeDuration: { type: Number, },
+    animeStatus: { type: Schema.Types.ObjectId, ref: 'Status' },
+
+    animeStory: {
+        ar: {
+            type: String, required: true,
+        },
+        en: {
+            type: String, required: true,
+        }
+    },
+    animeSeason: {
+        ar: {
+            type: String, required: true,
+        },
+        en: {
+            type: String, required: true,
+        }
+    },
+    animeSource: {
+        ar: {
+            type: String, required: true,
+        },
+        en: {
+            type: String, required: true,
+        }
+    },
+    releaseDay: {
+        ar: {
+            type: String, required: true,
+        },
+        en: {
+            type: String, required: true,
+        }
+    },
+    crews: [{ type: Schema.Types.ObjectId, ref: 'Crew' }],
+}, { timestamps: true, collection: 'Anime', });
+
+const Anime = mongoose.model('Anime', animeSchema);
 export default Anime;

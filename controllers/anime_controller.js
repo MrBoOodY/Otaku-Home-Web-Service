@@ -1,22 +1,23 @@
-import mongoose from 'mongoose';
+
 import Anime from '../models/anime.js';
+import { sendItemIfExist } from '../utils/helpers.js';
 
 export const getAnimeList = async (req, res) => {
     try {
-        const anime = await Anime.find();
+        const anime = await Anime.find().populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id');
 
         res.status(200).json(anime);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ message: error.message });
     }
 }
 
 export const getAnimeById = async (req, res) => {
     try {
-        const anime = await Anime.findById(req.params.id);
-        res.status(200).json(anime);
+        const anime = await Anime.findById(req.params.id).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id');
+        sendItemIfExist(anime, res);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ message: error.message });
 
     }
 }
@@ -28,7 +29,7 @@ export const addAnime = async (req, res) => {
         await anime.save();
         res.status(201).json(anime);
     } catch (error) {
-        res.status(409).json({ error: error.message });
+        res.status(409).json({ message: error.message });
 
     }
 }
@@ -37,21 +38,22 @@ export const addAnime = async (req, res) => {
 
 export const deleteAnime = async (req, res) => {
     try {
-        const anime = await Anime.findByIdAndDelete(req.params.id);
+        const anime = await Anime.findByIdAndDelete(req.params.id).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id');
         res.status(200).json(anime);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ message: error.message });
 
     }
 }
 
 export const editAnime = async (req, res) => {
     try {
-        await Anime.findByIdAndUpdate(req.params.id, req.body);
-        const anime = await Anime.findById(req.params.id);
-        res.status(200).json(anime);
+        const anime = await Anime.findByIdAndUpdate(req.params.id, req.body);
+        sendItemIfExist(anime, res, async () => {
+            return await Anime.findById(req.params.id).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id');
+        });
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ message: error.message });
 
     }
 }

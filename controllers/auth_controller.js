@@ -4,6 +4,34 @@ import User from '../models/user.js';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import { sendItemIfExist, sendListToClient, youAreNotAuthorized } from '../utils/helpers.js';
+/* import dotenv from 'dotenv';
+import passport from 'passport';
+import fbstrategy from 'passport-facebook';
+dotenv.config();
+const FacebookStrategy = fbstrategy.Strategy;
+passport.use(new FacebookStrategy({
+    clientID: process.env.facebook_api_key,
+    clientSecret: process.env.facebook_api_secret,
+    callbackURL: 'http://196.155.208.135:3000/api/auth/facebook/callback',
+    profileFields: ['id', 'first_name', 'last_name', 'picture', 'email', 'birthday', 'location']
+
+},
+    function (accessToken, refreshToken, profile, done) {
+        console.log(accessToken);
+        console.log(profile);
+        process.nextTick(function () {
+            //Check whether the User exists or not using profile.id
+            if (config.use_database) {
+                //Further code of Database.
+            }
+            return done(null, profile);
+        });
+    }
+));
+// FACEBOOK LOGIN
+export const facebookLogin = async (req, res) => {
+
+} */
 
 // GET ALL 
 export const getAllAccounts = async (req, res) => {
@@ -16,6 +44,8 @@ export const getAllAccounts = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+
 // TODO: add social media login instead of this way 
 //Social Media SIGN IN
 export const socialLogin = async (req, res) => {
@@ -30,6 +60,39 @@ export const socialLogin = async (req, res) => {
         req.params.isAdmin = user.isAdmin;
 
         editAccount(req, res);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}
+
+// LOGOUT
+export const logout = async (req, res) => {
+
+    try {
+
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const accessToken = authHeader.split(' ')[1]
+
+            const user = await User.findOne({ accessToken: accessToken });
+
+            if (user != null) {
+
+                req.body.accessToken = '';
+                req.params.id = user.id;
+                req.params.isAdmin = user.isAdmin;
+
+                editAccount(req, res);
+            }
+        }
+
+        else {
+
+            youAreNotAuthorized(res);
+        }
+
 
     } catch (error) {
         res.status(500).json({ message: error.message });

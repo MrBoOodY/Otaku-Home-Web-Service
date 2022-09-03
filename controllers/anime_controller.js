@@ -4,7 +4,11 @@ import { sendItemIfExist, sendListToClient } from '../utils/helpers.js';
 
 export const getAnimeList = async (req, res) => {
     try {
-        const serverAnimeList = await Anime.find().populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id -__v');
+        const { page, size, animeName, animeStatus, studio, animeType, } = req.query;
+        //TODO FINISH FILTER
+        const serverAnimeList = await Anime.find({
+
+        }).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id -__v');
 
 
         res.status(200).json(sendListToClient(serverAnimeList));

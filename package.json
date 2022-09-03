@@ -4,7 +4,10 @@
   "description": "web service to manage otaku home application",
   "main": "index",
   "scripts": {
-    "serve": "npx nodemon index.js"
+    "start": "npx nodemon index.js"
+  },
+  "engines": {
+    "node": "16.17.0"
   },
   "author": "",
   "license": "ISC",

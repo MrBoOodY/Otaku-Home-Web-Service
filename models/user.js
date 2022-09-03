@@ -3,6 +3,10 @@ import CryptoJs from 'crypto-js';
 const schema = mongoose.Schema;
 
 const userSchema = new schema({
+    secretKey: {
+        type: String,
+
+    },
     email: {
         type: String,
         required: true, lowercase: true,
@@ -19,7 +23,7 @@ const userSchema = new schema({
     },
     accessToken: {
         type: String,
-        unique: true, required: true,
+        unique: true,
     },
     coverImage: {
         type: String

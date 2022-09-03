@@ -1,6 +1,8 @@
 
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 import { sendItemIfExist, sendListToClient, youAreNotAuthorized } from '../utils/helpers.js';
 
 // GET ALL 
@@ -12,6 +14,26 @@ export const getAllAccounts = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+}
+// TODO: add social media login instead of this way 
+//Social Media SIGN IN
+export const socialLogin = async (req, res) => {
+    const user = new User(req.body);
+    try {
+
+        const accessToken = signJWT(user);
+
+        user.accessToken = accessToken;
+        req.body.accessToken = accessToken;
+        req.params.id = user.id;
+        req.params.isAdmin = user.isAdmin;
+
+        editAccount(req, res);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
     }
 }
 
@@ -42,34 +64,56 @@ export const login = async (req, res) => {
 
     }
 }
-
 //Forget Password
 export const forget = async (req, res) => {
-    const user = new User(req.body);
+
     try {
-        let originalUser = await User.findOne({ email: user.email });
-        if (originalUser == null) {
-            res.status(404).json({ message: 'email is not exist' });
+        const user = await User.findOne({ email: req.body.email });
+
+
+        const verified = speakeasy.totp.verify({
+            secret: user.secretKey,
+            encoding: 'base32',
+            token: req.body.userToken
+        });
+        if (verified) {
+            const accessToken = signJWT(user);
+            user.password = req.body.password;
+            user.accessToken = accessToken;
+            req.body = user;
+            req.params.id = user.id;
+            req.params.isAdmin = user.isAdmin;
+
+
+            editAccount(req, res);
         } else {
-            if (originalUser.passwordHash === user.password) {
-                const accessToken = signJWT(originalUser);
 
-                originalUser.accessToken = accessToken;
-                req.body.accessToken = accessToken;
-                req.params.id = originalUser.id;
-                req.params.isAdmin = originalUser.isAdmin;
-
-                editAccount(req, res);
-            } else {
-
-                res.status(401).json({ message: 'wrong password' });
-            }
+            res.status(403).json({ message: "invalid code" });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
 
     }
 }
+//Get Two Factor Authentication Base 32
+export const authMe = async (req, res) => {
+    try {
+        const secretKey = speakeasy.generateSecret({ length: 20, name: 'Otaku Home' });
+        await QRCode.toDataURL(secretKey.otpauth_url, function (err, url) {
+
+            if (err) { res.status(500).json({ message: err.message }); } else {
+
+                res.status(201).json({ secretKey: secretKey.base32, qrUrl: url });
+            }
+
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}
+
 
 //SIGN UP
 export const register = async (req, res) => {
@@ -85,13 +129,20 @@ export const register = async (req, res) => {
 
             res.status(201).json(user.toClient());
         } else {
-            res.status(409).json({ message: 'Email is Already Exist' });
+            if (req.params.isSocial) {
+                req.body = exist;
+                socialLogin(req, res);
+            } else {
+
+                res.status(409).json({ message: 'Email is Already Exist' });
+            }
         }
     } catch (error) {
         res.status(409).json({ message: error.message });
 
     }
 }
+
 
 
 
@@ -124,9 +175,8 @@ export const editAccount = async (req, res) => {
 
             user.passwordHash = user.password;
         }
-        const { _id, ...others } = user._doc;
         user =
-            await User.findByIdAndUpdate(req.params.id, others, {
+            await User.findByIdAndUpdate(req.params.id, user.toClient(), {
                 new: true
             });
         sendItemIfExist(user, res);

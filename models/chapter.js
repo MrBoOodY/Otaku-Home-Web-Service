@@ -9,6 +9,16 @@ const chapterSchema = new Schema({
     chapterNumber: { type: Number, unique: true },
 
 }, { timestamps: true, collection: 'Chapter', });
+chapterSchema.method('toClient', function () {
+    const object = this.toObject();
 
+    //Rename _id to be id
+    object.id = object._id;
+    //Deleting _id
+    delete object._id;
+    //Deleting __v
+    delete object.__v;
+    return object;
+});
 const Chapter = mongoose.model('Chapter', chapterSchema);
 export default Chapter;

@@ -17,7 +17,10 @@ const userSchema = new schema({
     profilePicture: {
         type: String
     },
-
+    accessToken: {
+        type: String,
+        unique: true, required: true,
+    },
     coverImage: {
         type: String
     },
@@ -52,6 +55,20 @@ userSchema.path('password').validate(function () {
     }
 
 }, null);
-const User = mongoose.model('User', userSchema);
 
+userSchema.method('toClient', function () {
+    const object = this.toObject();
+
+    //Rename _id to be id
+    object.id = object._id;
+    //Deleting _id
+    delete object._id;
+    //Deleting __v
+    delete object.__v;
+    //Deleting password
+    delete object.password;
+    return object;
+});
+
+const User = mongoose.model('User', userSchema);
 export default User;

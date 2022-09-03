@@ -10,14 +10,23 @@ import crewRoutes from './routes/crew.js';
 import episodeRoutes from './routes/episode.js';
 import userRoutes from './routes/user.js';
 import dotenv from 'dotenv';
-dotenv.config();
+import xss from 'xss-clean';
+import helmet from "helmet";
+import mongoSanitize from 'express-mongo-sanitize';
+import cors from "cors";
 
-const app = express();
 const PORT = process.env.PORT || 3000;
+const app = express();
 const apiPath = 'api';
 
-app.use(express.json({ extended: true }));
+dotenv.config();
+app.use(cors());
+//dealing with DOS attacks prevention is to limit the actual payload ( limit : 10kb) 
+app.use(express.json({ extended: true, limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(xss());
+app.use(helmet());
+app.use(mongoSanitize());
 app.use('/' + apiPath + '/anime', animeRoutes);
 app.use('/' + apiPath + '/episode', episodeRoutes);
 app.use('/' + apiPath + '/crew', crewRoutes);

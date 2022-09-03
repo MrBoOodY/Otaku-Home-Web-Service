@@ -40,6 +40,16 @@ const mangaSchema = new Schema({
     popular: { type: Boolean, required: true, },
 
 }, { timestamps: true, collection: 'Manga', });
+mangaSchema.method('toClient', function () {
+    const object = this.toObject();
 
+    //Rename _id to be id
+    object.id = object._id;
+    //Deleting _id
+    delete object._id;
+    //Deleting __v
+    delete object.__v;
+    return object;
+});
 const Manga = mongoose.model('Manga', mangaSchema);
 export default Manga;

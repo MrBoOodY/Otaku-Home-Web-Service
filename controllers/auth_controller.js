@@ -1,19 +1,14 @@
 
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
-import { destructPassword, sendItemIfExist } from '../utils/helpers.js';
+import { sendItemIfExist, sendListToClient, youAreNotAuthorized } from '../utils/helpers.js';
 
 // GET ALL 
 export const getAllAccounts = async (req, res) => {
     try {
 
         const user = await User.find();
-        const newList = [];
-        user.forEach(nestedUser => {
-
-            newList.push(destructPassword(nestedUser));
-        });
-        res.status(200).json(newList);
+        res.status(200).json(sendListToClient(user));
 
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -24,15 +19,47 @@ export const getAllAccounts = async (req, res) => {
 export const login = async (req, res) => {
     const user = new User(req.body);
     try {
-        const originalUser = await User.findOne({ email: user.email });
+        let originalUser = await User.findOne({ email: user.email });
         if (originalUser == null) {
-
             res.status(404).json({ message: 'email is not exist' });
         } else {
             if (originalUser.passwordHash === user.password) {
-
                 const accessToken = signJWT(originalUser);
-                res.status(200).json({ ...destructPassword(originalUser), accessToken: accessToken });
+
+                originalUser.accessToken = accessToken;
+                req.body.accessToken = accessToken;
+                req.params.id = originalUser.id;
+                req.params.isAdmin = originalUser.isAdmin;
+
+                editAccount(req, res);
+            } else {
+
+                res.status(401).json({ message: 'wrong password' });
+            }
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}
+
+//Forget Password
+export const forget = async (req, res) => {
+    const user = new User(req.body);
+    try {
+        let originalUser = await User.findOne({ email: user.email });
+        if (originalUser == null) {
+            res.status(404).json({ message: 'email is not exist' });
+        } else {
+            if (originalUser.passwordHash === user.password) {
+                const accessToken = signJWT(originalUser);
+
+                originalUser.accessToken = accessToken;
+                req.body.accessToken = accessToken;
+                req.params.id = originalUser.id;
+                req.params.isAdmin = originalUser.isAdmin;
+
+                editAccount(req, res);
             } else {
 
                 res.status(401).json({ message: 'wrong password' });
@@ -56,7 +83,7 @@ export const register = async (req, res) => {
 
             await user.save();
 
-            res.status(201).json(destructPassword(user));
+            res.status(201).json(user.toClient());
         } else {
             res.status(409).json({ message: 'Email is Already Exist' });
         }
@@ -71,8 +98,11 @@ export const register = async (req, res) => {
 //DELETE 
 export const deleteAccount = async (req, res) => {
     try {
+
         const user = await User.findByIdAndDelete(req.params.id);
-        sendItemIfExist(user, res, destructPassword(user));
+        sendItemIfExist(user, res);
+
+
 
 
 
@@ -99,14 +129,14 @@ export const editAccount = async (req, res) => {
             await User.findByIdAndUpdate(req.params.id, others, {
                 new: true
             });
-        sendItemIfExist(user, res, destructPassword(user));
+        sendItemIfExist(user, res);
 
     } catch (error) {
         res.status(500).json({ message: error.message });
 
     }
 }
-
+//CREATE NEW JWT
 function signJWT(user) {
-    return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.jwt_sec, { expiresIn: '15d' });
+    return jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.jwt_sec, { expiresIn: user.isAdmin ? '15m' : '15d' });
 }

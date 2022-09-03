@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 const animeSchema = new Schema({
-    id: String,
+
     animeName: {
         type: String, unique: true
     },
@@ -66,15 +66,15 @@ const animeSchema = new Schema({
     crews: [{ type: Schema.Types.ObjectId, ref: 'Crew' }],
 }, { timestamps: true, collection: 'Anime', });
 animeSchema.method('toClient', function () {
-    const anime = this.toObject();
+    const object = this.toObject();
 
     //Rename _id to be id
-    anime.id = anime._id;
+    object.id = object._id;
     //Deleting _id
-    delete anime._id;
+    delete object._id;
     //Deleting __v
-    delete anime.__v;
-    return anime;
+    delete object.__v;
+    return object;
 });
 const Anime = mongoose.model('Anime', animeSchema);
 export default Anime;

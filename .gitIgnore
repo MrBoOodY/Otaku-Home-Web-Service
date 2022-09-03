@@ -1,5 +1,4 @@
 .history
 /node_modules
 npm-debug.log
-.DS_Store
-/*.env
+.DS_Store 

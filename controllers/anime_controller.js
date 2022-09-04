@@ -8,7 +8,7 @@ export const getAnimeList = async (req, res) => {
         //TODO FINISH FILTER
         const serverAnimeList = await Anime.find({
 
-        }).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id -__v');
+        }).size(page).limit(size).populate('categories', 'ar en -_id').populate('animeStatus', 'ar en -_id').populate('crews', '-_id -__v');
 
 
         res.status(200).json(sendListToClient(serverAnimeList));

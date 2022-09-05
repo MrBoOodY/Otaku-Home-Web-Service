@@ -1,14 +1,13 @@
 
 import Anime from '../models/anime.js';
-import { populateCrews } from '../utils/anime_helpers.js';
-import { populateCategory, populateSeason, populateStatus, sendItemIfExist, sendListToClient } from '../utils/helpers.js';
+import { populateCrews, sendAnime, sendAnimeList } from '../utils/anime_helpers.js';
+import { categoryAggregate, populateCategory, populateSeason, populateStatus, sendItemIfExist, sendListToClient } from '../utils/helpers.js';
 
-import mongoose from 'mongoose';
-import { parse } from 'dotenv';
+import mongoose from 'mongoose'; 
 export const getAnimeList = async (req, res) => {
     try {
         let { page,  itemsCount, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, season, type, year, popular, } = req.query;
-        let sort ;
+        let sort ={};
         if (sortCreationDate) {
             sortCreationDate = parseInt(sortCreationDate ?? 1);
             sort['createdAt'] = sortCreationDate;
@@ -31,23 +30,8 @@ export const getAnimeList = async (req, res) => {
             title = { $regex: title, $options: "i" };
             filters.push({ title: title });
         }
-        if (category) {
-            console.log(mongoose.Types.ObjectId(category))
-            category = {
-                $ne: [
-                    {
-                        $filter: {
-                            input: "$categories",
-                            as: "category",
-                            cond: {
-                                $in: ["$$category", [mongoose.Types.ObjectId(category)]]
-                            }
-                        }
-                    },
-                    []
-                ]
-            }
-            filters.push({ $expr: category });
+        if (category) {  
+            filters.push( categoryAggregate(category) );
 
 
         }
@@ -127,15 +111,8 @@ export const getAnimeList = async (req, res) => {
       
 
         ]); 
-        const list = await Anime.populate(serverAnimeList, [
-            populateStatus,
-            populateCategory,
-            populateCrews,
-            populateSeason,
-        ]);
-        let serverList = []; 
-        list.forEach((item) => serverList.push(Anime(item).toClient(item.rates,item.status)));
-        res.status(200).json(serverList);
+        
+        sendAnimeList(res,serverAnimeList );
         
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -144,12 +121,33 @@ export const getAnimeList = async (req, res) => {
 
 export const getAnimeById = async (req, res) => {
     try {
-        const anime = await Anime.findById(req.params.id)
-            .populate(populateCategory)
-            .populate(populateStatus)
-            .populate(populateCrews)
-            .populate(populateSeason);
-        sendItemIfExist(anime, res);
+        const serverAnime = await Anime.aggregate([
+            {
+                $match: {
+
+
+                     _id:
+                     mongoose.Types.ObjectId(req.params.id),
+
+
+
+                }
+            },
+            {
+                $addFields: {
+                    rates: { $avg: "$rates.rate" },
+                }
+
+
+            },
+          
+              
+      
+
+        ]);  
+   
+        sendAnime(res,serverAnime);
+    
     } catch (error) {
         res.status(500).json({ message: error.message });
 
@@ -194,7 +192,7 @@ export const editAnime = async (req, res) => {
     try {
         let rates = req.body.rates;
         if (rates) {
-            req.body.rates = undefined;
+        delete    req.body.rates;
 
         }
         let anime = await Anime.findById(req.params.id);

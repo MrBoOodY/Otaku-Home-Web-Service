@@ -1,9 +1,29 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
+import mongoose from 'mongoose';
+
 const translatinSelect = 'ar en -_id';
-export const populateCategory =   {path:'categories',select: translatinSelect,model:'Category'} ;
-export const populateStatus =    {path:'status',select: translatinSelect,model:'Status'};
-export const populateSeason =    {path:'season',select: translatinSelect,model:'Season'};
+export const populateCategory = { path: 'categories', select: translatinSelect, model: 'Category' };
+export const populateStatus = { path: 'status', select: translatinSelect, model: 'Status' };
+export const populateSeason = { path: 'season', select: translatinSelect, model: 'Season' };
+export const categoryAggregate = (category) => {
+    return {
+        $expr: {
+            $ne: [
+                {
+                    $filter: {
+                        input: "$categories",
+                        as: "category",
+                        cond: {
+                            $in: ["$$category", [mongoose.Types.ObjectId(category)]]
+                        }
+                    }
+                },
+                []
+            ]
+        }
+    }
+}
 export const sendItemIfExist = async (item, res) => {
     if (item == null) {
         res.status(404).json({ 'message': 'this item doesn\'t exist' });
@@ -29,8 +49,8 @@ export const verityJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     try {
         //check if authorization header is exist or not
-                   
-                    if (authHeader) {
+
+        if (authHeader) {
             //obtain token
             const accessToken = authHeader.split(' ')[1];
             //verify token

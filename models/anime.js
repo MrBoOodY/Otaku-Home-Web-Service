@@ -64,7 +64,7 @@ const animeSchema = new Schema({
 }, { timestamps: true, collection: 'Anime', });
 animeSchema.method('toClient', function (rates,status) {
     const object = this.toObject();
-
+    
     //Rename _id to be id 
     object.id = object._id; 
     object.rates = rates??0; 

@@ -18,7 +18,11 @@ const mangaSchema = new Schema({
         type: String,
     },
     count: { type: Number, },
-    rates: { type: Number, },
+    rates: [{
+        "rate":Number,
+        "userId":   {type:Schema.Types.ObjectId,ref: 'User', },
+    }],
+
 
     status: { type: Schema.Types.ObjectId, ref: 'Status' },
     story: {
@@ -41,9 +45,11 @@ const mangaSchema = new Schema({
     popular: { type: Boolean, required: true, },
 
 }, { timestamps: true, collection: 'Manga', });
-mangaSchema.method('toClient', function () {
+mangaSchema.method('toClient', function (rates,status) {
     const object = this.toObject();
 
+    object.rates = rates??0; 
+    object.status = status;
     //Rename _id to be id
     object.id = object._id;
     //Deleting _id

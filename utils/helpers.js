@@ -1,8 +1,11 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
-
+const translatinSelect = 'ar en -_id';
+export const populateCategory =   {path:'categories',select: translatinSelect,model:'Category'} ;
+export const populateStatus =    {path:'status',select: translatinSelect,model:'Status'};
+export const populateSeason =    {path:'season',select: translatinSelect,model:'Season'};
 export const sendItemIfExist = async (item, res) => {
-    if (item === null) {
+    if (item == null) {
         res.status(404).json({ 'message': 'this item doesn\'t exist' });
 
     } else {
@@ -26,7 +29,8 @@ export const verityJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     try {
         //check if authorization header is exist or not
-        if (authHeader) {
+                   
+                    if (authHeader) {
             //obtain token
             const accessToken = authHeader.split(' ')[1];
             //verify token
@@ -36,7 +40,7 @@ export const verityJWT = (req, res, next) => {
 
                 } else {
                     //check whether user is admin or user id is the same request user id 
-                    if (responseUser.isAdmin) {
+                    if (responseUser.id) {
                         //find current user to check if he has the same token on DB or not
                         const user = await User.findById(responseUser.id);
                         //check if current header token is the same token on DB or not

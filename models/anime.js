@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const animeSchema = new Schema({
 
-    animeName: {
+    title: {
         type: String, unique: true
     },
     creationDate: {
@@ -16,38 +16,35 @@ const animeSchema = new Schema({
     studio: {
         type: String,
     },
-    animeType: {
+    type: {
         type: String,
     },
     tutorial: {
         type: String,
     },
-    rates: { type: Number, },
+    rates: [{
+        "rate":Number,
+        "userId":   {type:Schema.Types.ObjectId,ref: 'User', },
+    }],
 
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
     popular: { type: Boolean, required: true, },
     tierAge: { type: Number, },
-    episodesCount: { type: Number, },
-    episodeDuration: { type: Number, },
-    animeStatus: { type: Schema.Types.ObjectId, ref: 'Status' },
+    count: { type: Number, },
+    duration: { type: Number, },
+    year: { type: Number, },
+    status: { type: Schema.Types.ObjectId, ref: 'Status' },
+    season: { type: Schema.Types.ObjectId, ref: 'Season' },
+    story: {
+        ar: {
+            type: String, required: true,
+        },
+        en: {
+            type: String, required: true,
+        }
+    },
 
-    animeStory: {
-        ar: {
-            type: String, required: true,
-        },
-        en: {
-            type: String, required: true,
-        }
-    },
-    animeSeason: {
-        ar: {
-            type: String, required: true,
-        },
-        en: {
-            type: String, required: true,
-        }
-    },
-    animeSource: {
+    source: {
         ar: {
             type: String, required: true,
         },
@@ -65,11 +62,14 @@ const animeSchema = new Schema({
     },
     crews: [{ type: Schema.Types.ObjectId, ref: 'Crew' }],
 }, { timestamps: true, collection: 'Anime', });
-animeSchema.method('toClient', function () {
+animeSchema.method('toClient', function (rates,status) {
     const object = this.toObject();
 
-    //Rename _id to be id
-    object.id = object._id;
+    //Rename _id to be id 
+    object.id = object._id; 
+    object.rates = rates??0; 
+    object.status = status;
+ 
     //Deleting _id
     delete object._id;
     //Deleting __v

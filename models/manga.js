@@ -4,20 +4,24 @@ const Schema = mongoose.Schema;
 
 const mangaSchema = new Schema({
 
-    mangaName: {
+    title: {
         type: String,
         unique: true,
-    }, image: {
+    },
+     image: {
+        type: String,
+    },
+    directory: {
         type: String,
     },
     creationDate: {
         type: String,
     },
-    chaptersCount: { type: Number, },
+    count: { type: Number, },
     rates: { type: Number, },
 
-    mangaStatus: { type: Schema.Types.ObjectId, ref: 'Status' },
-    mangaStory: {
+    status: { type: Schema.Types.ObjectId, ref: 'Status' },
+    story: {
         ar: {
             type: String, required: true,
         },
@@ -26,11 +30,8 @@ const mangaSchema = new Schema({
         }
     },
     tierAge: { type: Number, },
-
-
-    directory: {
-        type: String,
-    },
+    year: { type: Number, },
+ 
     type: {
         type: String,
     },

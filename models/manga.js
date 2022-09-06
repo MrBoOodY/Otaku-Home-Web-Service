@@ -8,7 +8,7 @@ const mangaSchema = new Schema({
         type: String,
         unique: true,
     },
-     image: {
+    image: {
         type: String,
     },
     directory: {
@@ -19,8 +19,8 @@ const mangaSchema = new Schema({
     },
     count: { type: Number, },
     rates: [{
-        "rate":Number,
-        "userId":   {type:Schema.Types.ObjectId,ref: 'User', },
+        "rate": Number,
+        "userId": { type: Schema.Types.ObjectId, ref: 'User', },
     }],
 
 
@@ -35,21 +35,35 @@ const mangaSchema = new Schema({
     },
     tierAge: { type: Number, },
     year: { type: Number, },
- 
+
     type: {
         type: String,
     },
 
 
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
-    popular: { type: Boolean, required: true, },
+    popularity:  { type: Number, },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
 
 }, { timestamps: true, collection: 'Manga', });
-mangaSchema.method('toClient', function (rates,status) {
+mangaSchema.method('toClient', function (rates, status) {
     const object = this.toObject();
+    if (rates) {
 
-    object.rates = rates??0; 
-    object.status = status;
+        object.rates = rates;
+    } else if (object.rates) {
+        if (object.rates.length > 0) {
+            object.rates = object.rates.reduce((a, b) => a.rate + b.rate) / object.rates.length;
+        } else {
+            object.rates = 0;
+        }
+    }else{
+        object.rates = 0;
+
+    }
+    if (status) {
+        object.status = status;
+    }
     //Rename _id to be id
     object.id = object._id;
     //Deleting _id

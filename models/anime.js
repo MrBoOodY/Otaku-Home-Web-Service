@@ -23,12 +23,12 @@ const animeSchema = new Schema({
         type: String,
     },
     rates: [{
-        "rate":Number,
-        "userId":   {type:Schema.Types.ObjectId,ref: 'User', },
+        "rate": Number,
+        "userId": { type: Schema.Types.ObjectId, ref: 'User', },
     }],
 
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
-    popular: { type: Boolean, required: true, },
+    popularity:  { type: Number, },
     tierAge: { type: Number, },
     count: { type: Number, },
     duration: { type: Number, },
@@ -62,14 +62,26 @@ const animeSchema = new Schema({
     },
     crews: [{ type: Schema.Types.ObjectId, ref: 'Crew' }],
 }, { timestamps: true, collection: 'Anime', });
-animeSchema.method('toClient', function (rates,status) {
+animeSchema.method('toClient', function (rates, status) {
     const object = this.toObject();
-    
     //Rename _id to be id 
-    object.id = object._id; 
-    object.rates = rates??0; 
-    object.status = status;
- 
+    object.id = object._id;
+    if (rates) {
+
+        object.rates = rates;
+    } else if (object.rates) {
+        if (object.rates.length > 0) {
+            object.rates = object.rates.reduce((a, b) => a.rate + b.rate) / object.rates.length;
+        } else {
+            object.rates = 0;
+        }
+    }else{
+        object.rates = 0;
+
+    }
+    if (status) {
+        object.status = status;
+    }
     //Deleting _id
     delete object._id;
     //Deleting __v

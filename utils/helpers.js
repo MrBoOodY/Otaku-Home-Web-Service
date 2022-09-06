@@ -45,7 +45,7 @@ export const sendListToClient = function (serverList) {
     return clientList;
 }
 
-export const verityJWT = (req, res, next) => {
+export const verityJWT = (req, res, next, verifyBodyUserId) => {
     const authHeader = req.headers.authorization;
     try {
         //check if authorization header is exist or not
@@ -59,21 +59,37 @@ export const verityJWT = (req, res, next) => {
                     res.status(404).json({ message: err.message });
 
                 } else {
-                    //check whether user is admin or user id is the same request user id 
-                    if (responseUser.id) {
-                        //find current user to check if he has the same token on DB or not
-                        const user = await User.findById(responseUser.id);
-                        //check if current header token is the same token on DB or not
-                        if (user.accessToken == accessToken) {
-                            req.params.isAdmin = responseUser.isAdmin;
-                            next();
+                    //check whether user is admin or user id is the same requested user id 
+                    if (verifyBodyUserId) {
+                        
+                        if (responseUser.id ==req.body.userId) { 
+                            //find current user to check if he has the same token on DB or not
+                            const user = await User.findById(responseUser.id);
+                            //check if current header token is the same token on DB or not
+                            if (user.accessToken == accessToken) { 
+                                next();
+                            } else {
+                                youAreNotAuthorized(res);
+                            }
                         } else {
                             youAreNotAuthorized(res);
                         }
-
                     } else {
-                        youAreNotAuthorized(res);
 
+                        if (responseUser.isAdmin) {
+                            //find current user to check if he has the same token on DB or not
+                            const user = await User.findById(responseUser.id);
+                            //check if current header token is the same token on DB or not
+                            if (user.accessToken == accessToken) { 
+                                next();
+                            } else {
+                                youAreNotAuthorized(res);
+                            }
+
+                        } else {
+                            youAreNotAuthorized(res);
+
+                        }
                     }
                 }
             });

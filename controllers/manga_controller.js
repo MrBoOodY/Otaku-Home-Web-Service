@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import { sendManga, sendMangaList } from '../utils/manga_helpers.js';
 export const getMangaList = async (req, res) => {
     try {
-        let { page, itemsCount, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, type, year, popular, } = req.query;
+        let { page, itemsCount,sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, type, year, popular, } = req.query;
         let sort = {};
         if (sortCreationDate) {
             sortCreationDate = parseInt(sortCreationDate ?? 1);
@@ -25,17 +25,21 @@ export const getMangaList = async (req, res) => {
             sortYear = parseInt(sortYear ?? 1);
             sort['year'] = sortYear;
         }
+        if (sortPopularity ) {
+            sortPopularity = -1;
+            sort['popularity'] = sortPopularity;
+        }
         let filters = [];
         if (title) {
             title = { $regex: title, $options: "i" };
             filters.push({ title: title });
         }
-        if (category) { 
-  
+        if (category) {
+
             filters.push(categoryAggregate(category));
 
 
-        } 
+        }
         if (tierAge) {
             filters.push({ tierAge: parseInt(tierAge) });
 
@@ -70,6 +74,11 @@ export const getMangaList = async (req, res) => {
         }
         if (page < 1) {
             page = 1;
+
+        }
+        if(sortPopularity){
+            page =1;
+            itemsCount = 20;
 
         }
         const pipeline = [];
@@ -108,10 +117,9 @@ export const getMangaList = async (req, res) => {
 
 
 
-        ]);
-        
-        sendMangaList(res,serverMangaList );
-        
+        ]); 
+        sendMangaList(res, serverMangaList);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -119,13 +127,21 @@ export const getMangaList = async (req, res) => {
 
 export const getMangaById = async (req, res) => {
     try {
-        const serverManga = await Manga.aggregate([
+
+        let serverManga = await Manga.updateOne({ _id: req.params.id }, {
+            $inc: { popularity: 1 }
+        }
+
+        );
+
+
+        serverManga = await Manga.aggregate([
             {
                 $match: {
 
 
-                     _id:
-                     mongoose.Types.ObjectId(req.params.id),
+                    _id:
+                        mongoose.Types.ObjectId(req.params.id),
 
 
 
@@ -138,12 +154,12 @@ export const getMangaById = async (req, res) => {
 
 
             },
-          
-              
-      
 
-        ]);  
-        sendManga(res,serverManga);
+
+
+
+        ]);
+        sendManga(res, serverManga);
 
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -153,10 +169,16 @@ export const getMangaById = async (req, res) => {
 
 
 export const addManga = async (req, res) => {
+    if (req.body.rates) {
+        req.body.rates = undefined;
+
+    }
+    req.body.popularity = 0;
+
     const insertedManga = new Manga(req.body);
     try {
-        await insertedManga.save();
-        const manga = await manga.findById(insertedManga.id).populate(populateCategory).populate(populateStatus);
+        let manga = await insertedManga.save();
+        manga = await Manga.populate(manga, [populateCategory, populateStatus]);
         res.status(201).json(manga.toClient());
     } catch (error) {
         res.status(409).json({ message: error.message });
@@ -180,7 +202,18 @@ export const deleteManga = async (req, res) => {
 
 export const editManga = async (req, res) => {
     try {
-        const editedManga = await Manga.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (req.body.rates) {
+            req.body.rates = undefined;
+
+        }
+
+
+        const editedManga = await Manga.findByIdAndUpdate(req.params.id, req.body,
+            {
+                new: true,
+            })
+            .populate(populateCategory)
+            .populate(populateStatus);
         sendItemIfExist(editedManga, res);
 
     } catch (error) {
@@ -189,3 +222,56 @@ export const editManga = async (req, res) => {
     }
 }
 
+
+export const addRateToManga = async (req, res) => {
+    try {
+        let { userId, rate } = req.body;
+        if (userId) {
+
+            userId = mongoose.Types.ObjectId(userId);
+        }
+        if (rate) {
+            rate = parseInt(rate);
+        }
+        const manga = await Manga.updateOne({ _id: req.params.id }, [
+            {
+                $set: {
+                    rates: {
+                        $cond: {
+                            if: { $in: [userId, '$rates.userId'] },
+                            then: {
+                                $map: {
+                                    input: '$rates',
+                                    in: {
+                                        $cond: {
+                                            if: { $eq: ['$$this.userId', userId] },
+                                            then: { userId: '$$this.userId', rate: rate },
+                                            else: '$$this'
+                                        }
+                                    }
+                                }
+                            },
+                            else: {
+                                $concatArrays: ['$rates', [{ rate: rate, userId: userId }]]
+                            }
+                        }
+                    }
+                }
+            }
+        ], { new: true }); 
+        if (manga.matchedCount == 0) {
+            res.status(404).json({ message: 'this item doesn\'t exist' });
+        } else {
+            if (manga.modifiedCount == 0) {
+                res.status(500).json({ message: 'something went wrong' });
+
+            } else {
+                res.status(201).json({ message: 'Added successfully' });
+
+            }
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}

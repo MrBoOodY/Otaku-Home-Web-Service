@@ -35,7 +35,7 @@ export const getEpisodeReleaseDayById = async (req, res) => {
 export const addEpisodeReleaseDay = async (req, res) => {
     const insertedEpisodeReleaseDay = new EpisodeReleaseDay(req.body);
     try {
-  const episodeReleaseDay=      await insertedEpisodeReleaseDay.save().then(async (res) => {
+        const episodeReleaseDay = await insertedEpisodeReleaseDay.save().then(async (res) => {
             await res.populate({
                 path: 'anime',
                 model: 'Anime',
@@ -54,14 +54,14 @@ export const addEpisodeReleaseDay = async (req, res) => {
 
 export const deleteEpisodeReleaseDay = async (req, res) => {
     try {
-        const episodeReleaseDay = await EpisodeReleaseDay.findByIdAndDelete(req.params.id). populate({
-                path: 'anime',
-                model: 'Anime',
-                select: 'title image -_id',
-                populate: populateStatus
-           
+        const episodeReleaseDay = await EpisodeReleaseDay.findByIdAndDelete(req.params.id).populate({
+            path: 'anime',
+            model: 'Anime',
+            select: 'title image -_id',
+            populate: populateStatus
+
         });
-        sendItemIfExist(episodeReleaseDay);
+        sendItemIfExist(episodeReleaseDay, res);
     } catch (error) {
         res.status(500).json({ message: error.message });
 
@@ -70,7 +70,7 @@ export const deleteEpisodeReleaseDay = async (req, res) => {
 
 export const editEpisodeReleaseDay = async (req, res) => {
     try {
-        const episodeReleaseDay = await EpisodeReleaseDay.findByIdAndUpdate(req.params.id, req.body,{new:true}).populate({
+        const episodeReleaseDay = await EpisodeReleaseDay.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate({
             path: 'anime',
             model: 'Anime',
             select: 'title image -_id',

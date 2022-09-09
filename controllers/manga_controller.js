@@ -1,12 +1,12 @@
 
-import { categoryAggregate, populateCategory, populateStatus, sendItemIfExist, sendListToClient } from '../utils/helpers.js';
+import { categoryAggregate, populateCategory, populateStatus, sendItemIfExist } from '../utils/helpers.js';
 import Manga from '../models/manga.js';
 
 import mongoose from 'mongoose';
 import { sendManga, sendMangaList } from '../utils/manga_helpers.js';
 export const getMangaList = async (req, res) => {
     try {
-        let { page, itemsCount,sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, type, year, popular, } = req.query;
+        let { page, itemsCount, sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, type, year, popular, } = req.query;
         let sort = {};
         if (sortCreationDate) {
             sortCreationDate = parseInt(sortCreationDate ?? 1);
@@ -25,7 +25,7 @@ export const getMangaList = async (req, res) => {
             sortYear = parseInt(sortYear ?? 1);
             sort['year'] = sortYear;
         }
-        if (sortPopularity ) {
+        if (sortPopularity) {
             sortPopularity = -1;
             sort['popularity'] = sortPopularity;
         }
@@ -76,8 +76,8 @@ export const getMangaList = async (req, res) => {
             page = 1;
 
         }
-        if(sortPopularity){
-            page =1;
+        if (sortPopularity) {
+            page = 1;
             itemsCount = 20;
 
         }
@@ -117,7 +117,7 @@ export const getMangaList = async (req, res) => {
 
 
 
-        ]); 
+        ]);
         sendMangaList(res, serverMangaList);
 
     } catch (error) {
@@ -258,7 +258,7 @@ export const addRateToManga = async (req, res) => {
                     }
                 }
             }
-        ], { new: true }); 
+        ], { new: true });
         if (manga.matchedCount == 0) {
             res.status(404).json({ message: 'this item doesn\'t exist' });
         } else {

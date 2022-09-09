@@ -1,12 +1,13 @@
 
 import Anime from '../models/anime.js';
 import { populateCrews, sendAnime, sendAnimeList } from '../utils/anime_helpers.js';
-import { categoryAggregate, populateCategory, populateSeason, populateStatus, sendItemIfExist, sendListToClient } from '../utils/helpers.js';
+import { categoryAggregate, populateCategory, populateSeason, populateStatus, sendItemIfExist } from '../utils/helpers.js';
 
 import mongoose from 'mongoose';
+//GET ALL ANIME
 export const getAnimeList = async (req, res) => {
     try {
-        let { page, itemsCount,sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, season, type, year, popular, } = req.query;
+        let { page, itemsCount, sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, season, type, year, popular, } = req.query;
         let sort = {};
         if (sortCreationDate) {
             sortCreationDate = parseInt(sortCreationDate ?? 1);
@@ -25,7 +26,7 @@ export const getAnimeList = async (req, res) => {
             sortYear = parseInt(sortYear ?? 1);
             sort['year'] = sortYear;
         }
-        if (sortPopularity ) {
+        if (sortPopularity) {
             sortPopularity = -1;
             sort['popularity'] = sortPopularity;
         }
@@ -78,8 +79,8 @@ export const getAnimeList = async (req, res) => {
             page = 1;
 
         }
-        if(sortPopularity){
-            page =1;
+        if (sortPopularity) {
+            page = 1;
             itemsCount = 20;
 
         }
@@ -127,7 +128,7 @@ export const getAnimeList = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
-
+//GET ANIME BY ID
 export const getAnimeById = async (req, res) => {
     try {
 
@@ -171,6 +172,7 @@ export const getAnimeById = async (req, res) => {
 }
 
 
+//ADD ANIME 
 export const addAnime = async (req, res) => {
     if (req.body.rates) {
         req.body.rates = undefined;
@@ -190,7 +192,7 @@ export const addAnime = async (req, res) => {
 }
 
 
-
+//DELETE ANIME BY ID
 export const deleteAnime = async (req, res) => {
     try {
         const anime = await Anime.findByIdAndDelete(req.params.id)
@@ -206,6 +208,7 @@ export const deleteAnime = async (req, res) => {
     }
 }
 
+//EDIT ANIME BY ID
 export const editAnime = async (req, res) => {
     try {
         if (req.body.rates) {
@@ -221,7 +224,7 @@ export const editAnime = async (req, res) => {
             .populate(populateCategory)
             .populate(populateStatus)
             .populate(populateCrews)
-            .populate(populateSeason); 
+            .populate(populateSeason);
         sendItemIfExist(anime, res);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -229,6 +232,7 @@ export const editAnime = async (req, res) => {
     }
 }
 
+//ADD RATE TO ANIME BY ID
 export const addRateToAnime = async (req, res) => {
     try {
         let { userId, rate } = req.body;
@@ -264,7 +268,76 @@ export const addRateToAnime = async (req, res) => {
                     }
                 }
             }
-        ], { new: true }); 
+        ], { new: true });
+        if (anime.matchedCount == 0) {
+            res.status(404).json({ message: 'this item doesn\'t exist' });
+        } else {
+            if (anime.modifiedCount == 0) {
+                res.status(500).json({ message: 'something went wrong' });
+
+            } else {
+                res.status(201).json({ message: 'Added successfully' });
+
+            }
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}
+
+//ADD CONTENT CATEGORY TO ANIME BY ID
+export const addContentCategoryToAnime = async (req, res) => {
+    try {
+        let { userId, type, percent } = req.body;
+        if (userId) {
+
+            userId = mongoose.Types.ObjectId(userId);
+        }
+        if (percent) {
+            percent = parseInt(percent);
+        }
+        if (type) {
+            type = mongoose.Types.ObjectId(type);
+
+        }
+        const anime = await Anime.updateOne({ _id: req.params.id }, [
+            {
+                $set: {
+                    contentCategory: {
+                        $cond: {
+                            if: {
+                                $and: [
+                                    { $in: [userId, '$contentCategory.userId'], },
+                                    { $in: [type, '$contentCategory.type'], }
+                                ]
+                            },
+                            then: {
+                                $map: {
+                                    input: '$contentCategory',
+                                    as: 'contentCategory',
+                                    in: {
+                                        $cond: {
+                                            if: {
+                                                $and: [
+                                                    { $eq: [userId, '$$contentCategory.userId'], },
+                                                    { $eq: [type, '$$contentCategory.type'], }
+                                                ]
+                                            },
+                                            then: { userId: '$$contentCategory.userId', type: '$$contentCategory.type', percent: percent },
+                                            else: '$$contentCategory'
+                                        }
+                                    }
+                                }
+                            },
+                            else: {
+                                $concatArrays: ['$contentCategory', [{ type: type, userId: userId, percent: percent }]]
+                            }
+                        },
+                    }
+                },
+            },
+        ], { new: true });
         if (anime.matchedCount == 0) {
             res.status(404).json({ message: 'this item doesn\'t exist' });
         } else {

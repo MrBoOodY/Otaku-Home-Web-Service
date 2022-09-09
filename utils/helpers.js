@@ -2,10 +2,10 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import mongoose from 'mongoose';
 
-const translatinSelect = 'ar en -_id';
-export const populateCategory = { path: 'categories', select: translatinSelect, model: 'Category' };
-export const populateStatus = { path: 'status', select: translatinSelect, model: 'Status' };
-export const populateSeason = { path: 'season', select: translatinSelect, model: 'Season' };
+const translationSelect = 'ar en -_id';
+export const populateCategory = { path: 'categories', select: translationSelect, model: 'Category' };
+export const populateStatus = { path: 'status', select: translationSelect, model: 'Status' };
+export const populateSeason = { path: 'season', select: translationSelect, model: 'Season' };
 export const categoryAggregate = (category) => {
     return {
         $expr: {
@@ -45,11 +45,10 @@ export const sendListToClient = function (serverList) {
     return clientList;
 }
 
-export const verityJWT = (req, res, next, verifyBodyUserId) => {
+export const verityJWTWithId = (req, res, next, verifyBodyUserId) => {
     const authHeader = req.headers.authorization;
     try {
         //check if authorization header is exist or not
-
         if (authHeader) {
             //obtain token
             const accessToken = authHeader.split(' ')[1];
@@ -61,12 +60,12 @@ export const verityJWT = (req, res, next, verifyBodyUserId) => {
                 } else {
                     //check whether user is admin or user id is the same requested user id 
                     if (verifyBodyUserId) {
-                        
-                        if (responseUser.id ==req.body.userId) { 
+
+                        if (responseUser.id == req.body.userId) {
                             //find current user to check if he has the same token on DB or not
                             const user = await User.findById(responseUser.id);
                             //check if current header token is the same token on DB or not
-                            if (user.accessToken == accessToken) { 
+                            if (user.accessToken == accessToken) {
                                 next();
                             } else {
                                 youAreNotAuthorized(res);
@@ -80,7 +79,7 @@ export const verityJWT = (req, res, next, verifyBodyUserId) => {
                             //find current user to check if he has the same token on DB or not
                             const user = await User.findById(responseUser.id);
                             //check if current header token is the same token on DB or not
-                            if (user.accessToken == accessToken) { 
+                            if (user.accessToken == accessToken) {
                                 next();
                             } else {
                                 youAreNotAuthorized(res);
@@ -100,6 +99,48 @@ export const verityJWT = (req, res, next, verifyBodyUserId) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+export const verityJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    try {
+        //check if authorization header is exist or not
+        if (authHeader) {
+            //obtain token
+            const accessToken = authHeader.split(' ')[1];
+            //verify token
+            jwt.verify(accessToken, process.env.jwt_sec, async (err, responseUser) => {
+                if (err) {
+                    res.status(404).json({ message: err.message });
+
+                } else {
+                    //check whether user is admin or user id is the same requested user id 
+
+
+                    if (responseUser.isAdmin) {
+                        //find current user to check if he has the same token on DB or not
+                        const user = await User.findById(responseUser.id);
+                        //check if current header token is the same token on DB or not
+                        if (user.accessToken == accessToken) {
+                            next();
+                        } else {
+                            youAreNotAuthorized(res);
+                        }
+
+                    } else {
+                        youAreNotAuthorized(res);
+
+                    }
+
+                }
+            });
+        } else {
+            missingAuthorizationToken(res);
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 export const verityUserJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     try {

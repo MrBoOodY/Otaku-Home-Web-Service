@@ -26,9 +26,14 @@ const animeSchema = new Schema({
         "rate": Number,
         "userId": { type: Schema.Types.ObjectId, ref: 'User', },
     }],
+    contentCategory: [{
+        "percent": Number,
+        "type": { type: Schema.Types.ObjectId, ref: 'ContentCategory', },
+        "userId": { type: Schema.Types.ObjectId, ref: 'User', },
+    }],
 
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
-    popularity:  { type: Number, },
+    popularity: { type: Number, },
     tierAge: { type: Number, },
     count: { type: Number, },
     duration: { type: Number, },
@@ -64,8 +69,7 @@ const animeSchema = new Schema({
 }, { timestamps: true, collection: 'Anime', });
 animeSchema.method('toClient', function (rates, status) {
     const object = this.toObject();
-    //Rename _id to be id 
-    object.id = object._id;
+
     if (rates) {
 
         object.rates = rates;
@@ -75,13 +79,16 @@ animeSchema.method('toClient', function (rates, status) {
         } else {
             object.rates = 0;
         }
-    }else{
+    } else {
         object.rates = 0;
 
     }
+
     if (status) {
         object.status = status;
     }
+    //Rename _id to be id 
+    object.id = object._id;
     //Deleting _id
     delete object._id;
     //Deleting __v

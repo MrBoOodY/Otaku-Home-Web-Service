@@ -35,7 +35,7 @@ export const getEpisodeById = async (req, res) => {
 export const addEpisode = async (req, res) => {
     const insertedEpisode = new Episode(req.body);
     try {
-     const   episode=await insertedEpisode.save().then(async (res) => {
+        const episode = await insertedEpisode.save().then(async (res) => {
             await res.populate({
                 path: 'anime',
                 model: 'Anime',
@@ -43,7 +43,7 @@ export const addEpisode = async (req, res) => {
                 populate: populateStatus
             });
         });
-        res.status(201).json(episode);
+        res.status(201).json(episode.toClient());
     } catch (error) {
         res.status(409).json({ message: error.message });
 
@@ -54,14 +54,14 @@ export const addEpisode = async (req, res) => {
 
 export const deleteEpisode = async (req, res) => {
     try {
-        const episode = await Episode.findByIdAndDelete(req.params.id) .populate({
-                path: 'anime',
-                model: 'Anime',
-                select: 'title image status -_id',
-                populate: populateStatus
-            });
-        
-        sendItemIfExist(episode,res);
+        const episode = await Episode.findByIdAndDelete(req.params.id).populate({
+            path: 'anime',
+            model: 'Anime',
+            select: 'title image status -_id',
+            populate: populateStatus
+        });
+
+        sendItemIfExist(episode, res);
     } catch (error) {
         res.status(500).json({ message: error.message });
 
@@ -70,7 +70,7 @@ export const deleteEpisode = async (req, res) => {
 
 export const editEpisode = async (req, res) => {
     try {
-        const episode = await Episode.findByIdAndUpdate(req.params.id, req.body,{new:true}).populate({
+        const episode = await Episode.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate({
             path: 'anime',
             model: 'Anime',
             select: 'title image status -_id',

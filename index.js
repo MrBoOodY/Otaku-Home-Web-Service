@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import xss from 'xss-clean';
 import helmet from "helmet";
 import mongoSanitize from 'express-mongo-sanitize';
-import cors from "cors"; 
+import cors from "cors";
 
 //ROUTES IMPORTS
 import animeRoutes from './routes/anime.js';
@@ -17,7 +17,8 @@ import statusRoutes from './routes/status.js';
 import crewRoutes from './routes/crew.js';
 import episodeRoutes from './routes/episode.js';
 import userRoutes from './routes/user.js';
-import seasonRoutes from './routes/season.js'; 
+import seasonRoutes from './routes/season.js';
+import contentCategoryRoutes from './routes/content_category.js';
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -41,10 +42,11 @@ app.use('/' + apiPath + '/auth', authRoutes);
 app.use('/' + apiPath + '/status', statusRoutes);
 app.use('/' + apiPath + '/user', userRoutes);
 app.use('/' + apiPath + '/season', seasonRoutes);
+app.use('/' + apiPath + '/content-category', contentCategoryRoutes);
 
- 
 
- 
+
+
 mongoose.connect(process.env.mongoDB, { useNewUrlParser: true }).then(() => {
     app.listen(PORT);
 

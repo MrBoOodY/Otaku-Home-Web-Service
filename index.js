@@ -19,6 +19,7 @@ import episodeRoutes from './routes/episode.js';
 import userRoutes from './routes/user.js';
 import seasonRoutes from './routes/season.js';
 import contentCategoryRoutes from './routes/content_category.js';
+import myListTypesRoutes from './routes/my_list_types.js';
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -43,6 +44,7 @@ app.use('/' + apiPath + '/status', statusRoutes);
 app.use('/' + apiPath + '/user', userRoutes);
 app.use('/' + apiPath + '/season', seasonRoutes);
 app.use('/' + apiPath + '/content-category', contentCategoryRoutes);
+app.use('/' + apiPath + '/my-list-types', myListTypesRoutes);
 
 
 

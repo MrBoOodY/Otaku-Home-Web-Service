@@ -67,9 +67,14 @@ const animeSchema = new Schema({
     },
     crews: [{ type: Schema.Types.ObjectId, ref: 'Crew' }],
 }, { timestamps: true, collection: 'Anime', });
-animeSchema.method('toClient', function (rates, status) {
+animeSchema.method('toClient', function (rates, status, addedListAnime) {
     const object = this.toObject();
-
+    if (object.contentCategory && object.contentCategory.length > 0) {
+        for (var i = 0; i < object.contentCategory.length; i++) {
+            delete object.contentCategory[i]._id;
+        }
+        delete object.contentCategory._id;
+    }
     if (rates) {
 
         object.rates = rates;
@@ -87,6 +92,7 @@ animeSchema.method('toClient', function (rates, status) {
     if (status) {
         object.status = status;
     }
+    object.addedListAnime = addedListAnime;
     //Rename _id to be id 
     object.id = object._id;
     //Deleting _id

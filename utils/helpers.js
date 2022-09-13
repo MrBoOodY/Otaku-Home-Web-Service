@@ -60,7 +60,8 @@ export const verityJWTWithId = (req, res, next, verifyBodyUserId) => {
                 } else {
                     //check whether user is admin or user id is the same requested user id 
                     if (verifyBodyUserId) {
-
+                        console.log('responseUser.id' + responseUser.id);
+                        console.log('req.body.userId' + req.body.userId);
                         if (responseUser.id == req.body.userId) {
                             //find current user to check if he has the same token on DB or not
                             const user = await User.findById(responseUser.id);
@@ -74,21 +75,8 @@ export const verityJWTWithId = (req, res, next, verifyBodyUserId) => {
                             youAreNotAuthorized(res);
                         }
                     } else {
+                        youAreNotAuthorized(res);
 
-                        if (responseUser.isAdmin) {
-                            //find current user to check if he has the same token on DB or not
-                            const user = await User.findById(responseUser.id);
-                            //check if current header token is the same token on DB or not
-                            if (user.accessToken == accessToken) {
-                                next();
-                            } else {
-                                youAreNotAuthorized(res);
-                            }
-
-                        } else {
-                            youAreNotAuthorized(res);
-
-                        }
                     }
                 }
             });

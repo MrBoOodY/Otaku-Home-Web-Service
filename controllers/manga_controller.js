@@ -126,6 +126,13 @@ export const getMangaList = async (req, res) => {
 }
 
 export const getMangaById = async (req, res) => {
+    let mangaId;
+    if (req.params.id) {
+
+        mangaId = mongoose.Types.ObjectId(req.params.id);
+    } else {
+        res.status(400).json({ message: "Manga ID Is Missing" });
+    }
     try {
 
         let serverManga = await Manga.updateOne({ _id: req.params.id }, {
@@ -141,7 +148,7 @@ export const getMangaById = async (req, res) => {
 
 
                     _id:
-                        mongoose.Types.ObjectId(req.params.id),
+                        mangaId,
 
 
 
@@ -155,9 +162,45 @@ export const getMangaById = async (req, res) => {
 
             },
 
+            {
+                $lookup: {
+                    as: "addedListManga",
+                    from: "User",
+                    pipeline: [
 
+                        { $unwind: "$myMangaList" },
+                        {
+                            $project: {
+                                isInArray: {
+                                    $cond: [
+                                        { $eq: ["$myMangaList.manga", mangaId] },
+                                        1,
+                                        0
+                                    ]
+                                },
+                                myMangaList: 1
+                            }
+                        },
+                        { $sort: { isInArray: -1 } },
 
-
+                        { $match: { isInArray: 1 } },
+                        {
+                            $group: {
+                                _id: "$myMangaList.myListType",
+                                count: { $sum: 1 },
+                                isInArray: { $first: "$isInArray" }
+                            }
+                        },
+                        {
+                            $project: {
+                                count: 1,
+                                "_id": 0,
+                                id: "$_id",
+                            }
+                        }
+                    ],
+                }
+            },
         ]);
         sendManga(res, serverManga);
 

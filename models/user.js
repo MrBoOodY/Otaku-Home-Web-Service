@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import CryptoJs from 'crypto-js';
-const schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-const userSchema = new schema({
+const userSchema = new Schema({
     secretKey: {
         type: String,
 
@@ -31,6 +31,14 @@ const userSchema = new schema({
     bio: {
         type: String
     },
+    myAnimeList: [{
+        "anime": { type: Schema.Types.ObjectId, ref: 'Anime', },
+        "myListType": { type: Schema.Types.ObjectId, ref: 'MyListTypes', },
+    }],
+    myMangaList: [{
+        "manga": { type: Schema.Types.ObjectId, ref: 'Manga', },
+        "myListType": { type: Schema.Types.ObjectId, ref: 'MyListTypes', },
+    }],
     location: {
         type: String
     },

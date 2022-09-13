@@ -17,7 +17,7 @@ export const sendAnimeList = async function (res, list, sendOne) {
         populateContentCategory,
     ]);
     let serverList = [];
-    list.forEach((item) => serverList.push(Anime(item).toClient(item.rates, item.status)));
+    list.forEach((item) => serverList.push(Anime(item).toClient(item.rates, item.status, item.addedListAnime)));
     if (serverList.length == 0) {
         res.status(404).json({ message: 'this item doesn\'t exist' });
 

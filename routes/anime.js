@@ -9,7 +9,7 @@ router.post('/rate/:id', (req, res) => {
     verityJWTWithId(req, res, () => addRateToAnime(req, res), true);
 });
 router.post('/content-category/:id', (req, res) => {
-    verityJWT(req, res, () => addContentCategoryToAnime(req, res), true);
+    verityJWTWithId(req, res, () => addContentCategoryToAnime(req, res), true);
 });
 router.delete('/:id', verityJWT, deleteAnime);
 router.put('/:id', verityJWT, editAnime);

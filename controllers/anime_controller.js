@@ -115,7 +115,6 @@ export const getAnimeList = async (req, res) => {
 
             },
 
-
             ...pipeline,
 
 
@@ -130,6 +129,13 @@ export const getAnimeList = async (req, res) => {
 }
 //GET ANIME BY ID
 export const getAnimeById = async (req, res) => {
+    let animeId;
+    if (req.params.id) {
+
+        animeId = mongoose.Types.ObjectId(req.params.id);
+    } else {
+        res.status(400).json({ message: "Anime Id Is Missing" });
+    }
     try {
 
         let serverAnime = await Anime.updateOne({ _id: req.params.id }, {
@@ -139,27 +145,56 @@ export const getAnimeById = async (req, res) => {
 
 
         serverAnime = await Anime.aggregate([
+
             {
                 $match: {
-
-
-                    _id:
-                        mongoose.Types.ObjectId(req.params.id),
-
-
-
+                    _id: animeId,
                 }
             },
             {
                 $addFields: {
                     rates: { $avg: "$rates.rate" },
                 }
-
-
             },
+            {
+                $lookup: {
+                    as: "addedListAnime",
+                    from: "User",
+                    pipeline: [
 
+                        { $unwind: "$myAnimeList" },
+                        {
+                            $project: {
+                                isInArray: {
+                                    $cond: [
+                                        { $eq: ["$myAnimeList.anime", animeId] },
+                                        1,
+                                        0
+                                    ]
+                                },
+                                myAnimeList: 1
+                            }
+                        },
+                        { $sort: { isInArray: -1 } },
 
-
+                        { $match: { isInArray: 1 } },
+                        {
+                            $group: {
+                                _id: "$myAnimeList.myListType",
+                                count: { $sum: 1 },
+                                isInArray: { $first: "$isInArray" }
+                            }
+                        },
+                        {
+                            $project: {
+                                count: 1,
+                                "_id": 0,
+                                id: "$_id",
+                            }
+                        }
+                    ],
+                }
+            },
 
         ]);
 

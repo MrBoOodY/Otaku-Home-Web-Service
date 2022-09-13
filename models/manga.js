@@ -42,11 +42,11 @@ const mangaSchema = new Schema({
 
 
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
-    popularity:  { type: Number, },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+    popularity: { type: Number, },
 
 
 }, { timestamps: true, collection: 'Manga', });
-mangaSchema.method('toClient', function (rates, status) {
+mangaSchema.method('toClient', function (rates, status, addedListManga) {
     const object = this.toObject();
     if (rates) {
 
@@ -57,13 +57,14 @@ mangaSchema.method('toClient', function (rates, status) {
         } else {
             object.rates = 0;
         }
-    }else{
+    } else {
         object.rates = 0;
 
     }
     if (status) {
         object.status = status;
     }
+    object.addedListManga = addedListManga;
     //Rename _id to be id
     object.id = object._id;
     //Deleting _id

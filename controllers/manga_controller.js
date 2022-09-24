@@ -1,9 +1,11 @@
 
 import { categoryAggregate, populateCategory, populateStatus, sendItemIfExist } from '../utils/helpers.js';
 import Manga from '../models/manga.js';
-
+import fs from 'fs';
 import mongoose from 'mongoose';
 import { sendManga, sendMangaList } from '../utils/manga_helpers.js';
+import { body } from 'express-validator';
+
 export const getMangaList = async (req, res) => {
     try {
         let { page, itemsCount, sortPopularity, sortCreationDate, sortTitle, sortRates, sortYear, tierAge, title, category, studio, status, type, year, popular, } = req.query;
@@ -212,15 +214,37 @@ export const getMangaById = async (req, res) => {
 
 
 export const addManga = async (req, res) => {
+    //Handling multi part request for mapped object
+    req.body.story = {
+        ar: req.body.storyAr,
+        en: req.body.storyEn,
+    }
+    delete req.body.storyAr;
+    delete req.body.storyEn;
+    //End of Handling multi part request for mapped object 
     if (req.body.rates) {
         req.body.rates = undefined;
 
     }
     req.body.popularity = 0;
 
+
     const insertedManga = new Manga(req.body);
     try {
         let manga = await insertedManga.save();
+
+        if (req.body.image) {
+
+            const id = manga._id.toString();
+            const oldPath = req.body.image;
+            const imageName = oldPath.toString().split('/')[2];
+            const extension = imageName.split('.')[1];
+            const newPath = oldPath.replace(imageName, id + '.' + extension);
+            fs.rename(oldPath, newPath, function (err) {
+                if (err) throw err;
+            });
+            manga = await Manga.findByIdAndUpdate(id, { image: newPath }, { new: true });
+        }
         manga = await Manga.populate(manga, [populateCategory, populateStatus]);
         res.status(201).json(manga.toClient());
     } catch (error) {
@@ -233,7 +257,19 @@ export const addManga = async (req, res) => {
 
 export const deleteManga = async (req, res) => {
     try {
-        const manga = await manga.findByIdAndDelete(req.params.id).populate(populateCategory).populate(populateStatus);
+        const manga = await Manga.findByIdAndDelete(req.params.id).populate(populateCategory).populate(populateStatus);
+        if (manga != null) {
+
+            if (manga.image) {
+                fs.unlink(manga.image, (err) => {
+                    if (err) {
+                        throw err;
+
+                    }
+
+                });
+            }
+        }
         sendItemIfExist(manga, res);
 
 
@@ -244,14 +280,55 @@ export const deleteManga = async (req, res) => {
 }
 
 export const editManga = async (req, res) => {
+    //Handling multi part request for mapped object
+    req.body.story = {
+        ar: req.body.storyAr,
+        en: req.body.storyEn,
+    }
+    delete req.body.storyAr;
+    delete req.body.storyEn;
+    //End of Handling multi part request for mapped object 
+
     try {
         if (req.body.rates) {
             req.body.rates = undefined;
 
         }
 
+        let editedManga;
 
-        const editedManga = await Manga.findByIdAndUpdate(req.params.id, req.body,
+        // check if email taken or not.  if email exist and id is not the same requested id it will throw error message
+        if (req.body.title) {
+            const isExist = await Manga.findOne({ title: req.body.title });
+            if (isExist != null) {
+                if (isExist._id.toString() != req.params.id.toString()) {
+                    return res.status(422).json({ message: 'title Already Exist Please Choose Another title' });
+                }
+            }
+
+        }
+
+        // check if image is the same or not. if not then it will be replaced by the new one
+        if (req.body.image) {
+
+
+            editedManga = await Manga.findById(req.params.id);
+
+            if (editedManga != null) {
+
+                if (req.body.image != editedManga.image && editedManga.image) {
+                    fs.unlink(editedManga.image, (err) => {
+                        if (err) {
+                            throw err;
+
+                        }
+
+                    });
+                }
+            }
+
+        }
+        editedManga = await Manga.findByIdAndUpdate(req.params.id, req.body,
             {
                 new: true,
             })

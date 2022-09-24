@@ -58,15 +58,6 @@ userSchema.virtual('passwordHash')
     .set(function (value) {
         this.password = CryptoJs.AES.encrypt(value, process.env.pass_sec).toString();
     });
-userSchema.path('password').validate(function () {
-    if (this.password) {
-        if (this.password.length < 8) {
-            this.invalidate('password', 'must be at least 8 characters.');
-        }
-
-    }
-
-}, null);
 
 userSchema.method('toClient', function () {
     const object = this.toObject();

@@ -2,7 +2,8 @@
 import mongoose from 'mongoose';
 import User from '../models/user.js';
 import { sendItemIfExist } from '../utils/helpers.js';
-import { populateMyList, sendUser } from '../utils/user_helpers.js';
+import { sendUser } from '../utils/user_helpers.js';
+import fs from 'fs';
 
 // GET USER BY ID
 export const getUserByID = async (req, res) => {
@@ -105,6 +106,66 @@ export const addAnimeToMyList = async (req, res) => {
 }
 
 
+// EDIT
+export const editAccount = async (req, res) => {
+    try {
+        delete req.body.isAdmin;
+        let user;
+        user = new User(req.body)
+        if (user.password) {
+
+            user.passwordHash = user.password;
+
+        }
+        // check if email taken or not.  if email exist and id is not the same requested id it will throw error message
+        if (req.body.email) {
+            const isExist = await User.findOne({ email: req.body.email });
+            if (isExist != null) {
+                if (isExist._id.toString() != req.params.id.toString()) {
+                    return res.status(422).json({ message: 'Email Address Already Exist Please Choose Another Email Address' });
+                }
+            }
+
+        }
+
+        // check if coverImage or profilePicture is the same or not. if not then it will be replaced by the new one
+        if (req.body.coverImage || req.body.profilePicture) {
+
+
+            user = await User.findOne({ _id: mongoose.Types.ObjectId(req.params.id) });
+            if (req.body.coverImage != user.coverImage && user.coverImage) {
+                fs.unlink(user.coverImage, (err) => {
+                    if (err) {
+                        throw err;
+
+                    }
+
+                });
+            }
+            if (req.body.profilePicture != user.profilePicture && user.profilePicture) {
+                fs.unlink(user.profilePicture, (err) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                });
+            }
+        }
+
+        // reassign the body to the user to update the new data 
+        user = new User(req.body)
+        const { _id, ...finalUser } = user._doc;
+        user =
+            await User.findOneAndUpdate({ _id: mongoose.Types.ObjectId(req.params.id) }, finalUser, {
+                new: true
+            });
+        sendItemIfExist(user, res);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+
+    }
+}
 // Add Manga To My List
 export const addMangaToMyList = async (req, res) => {
     try {

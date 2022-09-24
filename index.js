@@ -6,7 +6,8 @@ import xss from 'xss-clean';
 import helmet from "helmet";
 import mongoSanitize from 'express-mongo-sanitize';
 import cors from "cors";
-
+import fileupload from 'express-fileupload';
+//TODO MAKE DELETE FOR IMAGE WHILE EDITING OR DELETING MANGA OR ANIME
 //ROUTES IMPORTS
 import animeRoutes from './routes/anime.js';
 import mangaRoutes from './routes/manga.js';
@@ -25,6 +26,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 const apiPath = 'api';
 
+
 dotenv.config();
 app.use(cors());
 //dealing with DOS attacks prevention is to limit the actual payload ( limit : 10kb) 
@@ -33,6 +35,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(xss());
 app.use(helmet());
 app.use(mongoSanitize());
+app.use(fileupload({ createParentPath: true }));
+
+
 app.use('/' + apiPath + '/anime', animeRoutes);
 app.use('/' + apiPath + '/episode', episodeRoutes);
 app.use('/' + apiPath + '/crew', crewRoutes);
